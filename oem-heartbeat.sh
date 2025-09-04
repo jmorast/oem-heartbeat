@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+export PATH=/usr/local/bin:/usr/bin:/bin
+
+# ===================== CONFIG =====================
+# Unique healthcheck URL for this site/client
+HC_URL="${HC_URL:-}"
+
+# Oracle DB Setup
+export ORACLE_SID="${ORACLE_SID:-}"
+export ORAENV_ASK=NO
+. /usr/local/bin/oraenv -s
+
+# Oracle oms install paths
+OMS_HOME="${OMS_HOME:-/u01/app/oracle/middleware24/oms_home}"
+AGENT_HOME="${AGENT_HOME:-/u01/app/oracle/agent24/agent_inst}"
+
+# Direct paths to binaries
+EMCTL_OMS="$OMS_HOME/bin/emctl"
+EMCTL_AGENT="$AGENT_HOME/bin/emctl"
+SQLPLUS="$ORACLE_HOME/bin/sqlplus"
+
+# DB connect (use OS auth by default; or "user/pw@host:1521/service")
+EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
+
+# Timeouts (seconds)
+EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
+SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
+CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
+DEBUG="${DEBUG:-0}"
+# ==================================================
+
+die() {
+    log "Failure: $*"
+    curl -fsS -m "$CURL_TIMEOUT" "${HC_URL%/}/fail" >/dev/null || true
+    exit 1
+}
+need() { [ -x "$1" ] || die "Missing or not executable: $1"; }
+
+need "$EMCTL_OMS"
+need "$EMCTL_AGENT"
+need "$SQLPLUS"
+command -v timeout >/dev/null 2>&1 || die "Missing command: timeout"
+command -v curl >/dev/null 2>&1 || die "Missing command: curl"
+
+[ -n "$HC_URL" ] || die "HC_URL is not set"
+
+log() { echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] $*"; }
+
+check_oms() {
+    log "OMS check..."
+    local out
+    out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_OMS" status oms 2>&1) || {
+        [ "$DEBUG" = "1" ] && echo "$out"
+        return 1
+    }
+    # 13.5: "is running", 24ai: "is Up"
+    if ! grep -Eqi 'Oracle Management Server .* (running|up)' <<<"$out"; then
+        [ "$DEBUG" = "1" ] && echo "$out"
+        return 1
+    fi
+}
+
+check_agent() {
+    log "Agent check..."
+    local out
+    out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1) || { echo "$out"; return 1; }
+    grep -qi "Agent is Running" <<<"$out" || { echo "$out"; return 1; }
+}
+
+check_db_open() {
+   log "EMREP open check..."
+   local out
+   if ! out=$(timeout "${SQLPLUS_TIMEOUT}s" "$SQLPLUS" -L -s ${EMREP_CONNECT} <<'SQL'
+set pages 0 feed off ver off echo off
+select case when open_mode like 'READ%' then 'OPEN' else open_mode end from v$database;
+SQL
+   ); then
+       [ "$DEBUG" = "1" ] && echo "$out"
+       return 1
+  fi
+  grep -q "OPEN" <<<"$out" || { [ "$DEBUG" = "1" ] && echo "$out"; return 1; }
+}
+
+
+main() {
+    check_oms || die "OMS not healthy"
+    check_agent || die "Agent not healthy"
+    check_db_open || die "EMREP not OPEN"
+
+    log "All good → pinging healthcheck"
+    curl -fsS -m "$CURL_TIMEOUT" "$HC_URL" >/dev/null
+    log "Ping sent"
+}
+
+main "$@"
