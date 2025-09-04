@@ -1,7 +1,9 @@
 # oem-heartbeat
 Dead man’s switch heartbeat for Oracle Enterprise Manager (OEM), designed for cron + external services like Healthchecks.io.
 
-## Cron Setup
+## Setup
+
+Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 
 1. Copy the script to `/usr/local/bin` and make it executable:
 
@@ -16,18 +18,25 @@ Dead man’s switch heartbeat for Oracle Enterprise Manager (OEM), designed for 
    sudo chmod 755 /usr/local/bin/oem-heartbeat
    ```
 
-2. Edit the oracle user’s crontab:
+2. Verify that the script works as user oracle
+
+   ```bash
+   sudo su - oracle
+   ORACLE_SID=YOUR_OEM_SID HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat
+   ```
+
+3. Edit the oracle user’s crontab:
    ```bash
    crontab -e
    ```
 
-3. Add a daily heartbeat job (example: run at 07:12):
+4. Add a daily heartbeat job (example: run at 07:12):
   
    ```bash
-   12 7 * * * ORACLE_SID=emrep HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat >>/tmp/oem-heartbeat.log 2>&1
+   12 7 * * * ORACLE_SID=YOUR_OEM_SID HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat >>/tmp/oem-heartbeat.log 2>&1
    ```
 
-   - `ORACLE_SID=oemdb` → replace with the SID for your EM repository database.
+   - `ORACLE_SID=oem database sid` → replace with the SID for your EM repository database.
    - `HC_URL=...` → your unique Healthchecks.io / Cronitor / Better Stack endpoint.
    - Output is logged to /tmp/oem-heartbeat.log.
 
