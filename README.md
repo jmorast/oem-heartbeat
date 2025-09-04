@@ -7,7 +7,7 @@ Dead man’s switch heartbeat for Oracle Enterprise Manager (OEM), designed for 
 
    ```bash
    curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.1/oem-heartbeat
-   curl -sSLo oem-heartbeat.sha256 https://github.com/jmorast/oem-heartbeat/releases/download/v1.0.1/oem-heartbeat.sha256
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.1/oem-heartbeat.sha256
 
    # Verify the checksum
    sha256sum -c oem-heartbeat.sha256
