@@ -38,7 +38,7 @@ crontab -l
 Check logs after the first run:
 
 ```bash
-tail -f /var/log/oem-healthcheck/oem-heartbeat.log
+tail -f /tmp/oem-heartbeat.log
 ```
 
 You should see entries like:
