@@ -6,9 +6,11 @@ Dead man’s switch heartbeat for Oracle Enterprise Manager (OEM), designed for 
 1. Copy the script to `/usr/local/bin` and make it executable:
 
    ```bash
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.0/oem-heartbeat
-   sha256sum oem-heartbeat
-   # Compare against: d41d8cd98f00b204e9800998ecf8427e
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.1/oem-heartbeat
+   curl -sSLo oem-heartbeat.sha256 https://github.com/jmorast/oem-heartbeat/releases/download/v1.0.1/oem-heartbeat.sha256
+
+   # Verify the checksum
+   sha256sum -c oem-heartbeat.sha256
 
    sudo cp oem-heartbeat /usr/local/bin/oem-heartbeat
    sudo chmod 755 /usr/local/bin/oem-heartbeat
