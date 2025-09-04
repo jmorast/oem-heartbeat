@@ -32,6 +32,8 @@ CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
 DEBUG="${DEBUG:-0}"
 # ==================================================
 
+log() { echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] $*"; }
+
 die() {
     log "Failure: $*"
     curl -fsS -m "$CURL_TIMEOUT" "${HC_URL%/}/fail" >/dev/null || true
@@ -46,8 +48,6 @@ command -v timeout >/dev/null 2>&1 || die "Missing command: timeout"
 command -v curl >/dev/null 2>&1 || die "Missing command: curl"
 
 [ -n "$HC_URL" ] || die "HC_URL is not set"
-
-log() { echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] $*"; }
 
 check_oms() {
     log "OMS check..."
