@@ -64,10 +64,11 @@ You should see entries like:
 [2025-09-04T07:12:10Z] EMREP open check...
 [2025-09-04T07:12:12Z] All good → pinging healthcheck
 [2025-09-04T07:12:12Z] Ping sent
+```
 
 ---
 
-## 🛠 Maintainer Notes (Release Checklist)
+## Maintainer Notes (Release Checklist)
 
 When updating the script, follow these steps:
 
