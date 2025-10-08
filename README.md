@@ -8,8 +8,8 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 1. Copy the script to `/usr/local/bin` and make it executable:
 
    ```bash
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.2/oem-heartbeat
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.2/oem-heartbeat.sha256
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.3/oem-heartbeat
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.3/oem-heartbeat.sha256
 
    # Verify the checksum
    sha256sum -c oem-heartbeat.sha256
@@ -64,3 +64,40 @@ You should see entries like:
 [2025-09-04T07:12:10Z] EMREP open check...
 [2025-09-04T07:12:12Z] All good → pinging healthcheck
 [2025-09-04T07:12:12Z] Ping sent
+
+---
+
+## 🛠 Maintainer Notes (Release Checklist)
+
+When updating the script, follow these steps:
+
+1. Update checksum
+   ```bash
+   sha256sum oem-heartbeat > oem-heartbeat.sha256
+   git add oem-heartbeat oem-heartbeat.sha256
+   git commit -m "Update checksum for vX.Y.Z"
+   ```
+
+2. Tag new version
+   ```bash
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin main
+   git push origin vX.Y.Z
+   ```
+
+3. Update README version
+   Replace the previous version numbers in the curl URLs with vX.Y.Z.
+   Commit that change:
+   ```bash
+   git add README.md
+   git commit -m "Update README to reference vX.Y.Z"
+   git push origin main
+   ```
+
+4. Verify release
+   ```bash
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat.sha256
+   sha256sum -c oem-heartbeat.sha256
+   ```
+
