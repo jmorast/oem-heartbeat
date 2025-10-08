@@ -65,9 +65,31 @@ check_oms() {
 
 check_agent() {
     log "Agent check..."
-    local out
-    out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1) || { echo "$out"; return 1; }
-    grep -qi "Agent is Running" <<<"$out" || { echo "$out"; return 1; }
+    local out rc
+    if ! out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1); then
+        rc=$?
+        log "Agent status command failed (rc=$rc)"
+        case $rc in
+            124) log "Timeout: agent command exceeded ${EMCTL_TIMEOUT}s" ;;
+            127) log "emctl binary missing or not executable: $EMCTL_AGENT" ;;
+            *)   log "emctl returned error — see output below:" ;;
+        esac
+        echo "$out"
+        return 1
+    fi
+
+    # Normalize and evaluate output
+    if grep -Eqi "Agent (is )?(Running|Up|Ready)" <<<"$out"; then
+        [ "$DEBUG" = "1" ] && echo "$out"
+        return 0
+    else
+        log "Agent appears unhealthy. Raw output:"
+        echo "$out" | sed 's/^/    /'
+        # Some common indicators
+        grep -qi "blocked|not able to connect|invalid" <<<"$out" && \
+            log "Hint: Agent may be blocked, misconfigured, or unable to reach OMS."
+        return 1
+    fi
 }
 
 check_db_open() {

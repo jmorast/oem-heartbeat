@@ -1,7 +1,7 @@
 # oem-heartbeat
 Dead man’s switch heartbeat for Oracle Enterprise Manager (OEM), designed for cron + external services like Healthchecks.io.
 
-## Setup
+## Setup oem-heartbeat
 
 Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 
@@ -42,7 +42,7 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 
 ---
 
-## Verifying
+## Verifying oem-heartbeat
 
 After saving your crontab, confirm it’s scheduled:
 
