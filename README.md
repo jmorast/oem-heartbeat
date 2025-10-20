@@ -73,13 +73,28 @@ You should see entries like:
 When updating the script, follow these steps:
 
 1. Update checksum
+
    ```bash
    sha256sum oem-heartbeat > oem-heartbeat.sha256
    git add oem-heartbeat oem-heartbeat.sha256
    git commit -m "Update checksum for vX.Y.Z"
    ```
 
+   Update version constant in the script
+
+   - Edit the `VERSION` variable near the top of `oem-heartbeat` to the new version (for small repos we keep the version inside the script).
+
+   - Example (zsh/mac sed):
+
+     ```bash
+     # change 1.0.4 -> 1.0.5
+     sed -i '' 's/VERSION="1.0.4"/VERSION="1.0.5"/' oem-heartbeat
+     git add oem-heartbeat
+     git commit -m "Bump version to vX.Y.Z"
+     ```
+
 2. Tag new version
+
    ```bash
    git tag -a vX.Y.Z -m "Release vX.Y.Z"
    git push origin main
@@ -87,8 +102,11 @@ When updating the script, follow these steps:
    ```
 
 3. Update README version
+
    Replace the previous version numbers in the curl URLs with vX.Y.Z.
+
    Commit that change:
+
    ```bash
    git add README.md
    git commit -m "Update README to reference vX.Y.Z"
@@ -96,6 +114,7 @@ When updating the script, follow these steps:
    ```
 
 4. Verify release
+
    ```bash
    curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat
    curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat.sha256

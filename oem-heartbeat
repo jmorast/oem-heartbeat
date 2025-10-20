@@ -29,7 +29,7 @@ EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
 EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-DEBUG="${DEBUG:-0}"
+VERSION="1.0.4"
 # ==================================================
 
 log() { echo "[$(date -u +'%Y-%m-%dT%H:%M:%SZ')] $*"; }
@@ -53,12 +53,12 @@ check_oms() {
     log "OMS check..."
     local out
     out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_OMS" status oms 2>&1) || {
-        [ "$DEBUG" = "1" ] && echo "$out"
+        echo "$out"
         return 1
     }
     # 13.5: "is running", 24ai: "is Up"
     if ! grep -Eqi 'Oracle Management Server .* (running|up)' <<<"$out"; then
-        [ "$DEBUG" = "1" ] && echo "$out"
+        echo "$out"
         return 1
     fi
 }
@@ -80,7 +80,7 @@ check_agent() {
 
     # Normalize and evaluate output
     if grep -Eqi "Agent (is )?(Running|Up|Ready)" <<<"$out"; then
-        [ "$DEBUG" = "1" ] && echo "$out"
+        echo "$out"
         return 0
     else
         log "Agent appears unhealthy. Raw output:"
@@ -100,20 +100,22 @@ set pages 0 feed off ver off echo off
 select case when open_mode like 'READ%' then 'OPEN' else open_mode end from v$database;
 SQL
    ); then
-       [ "$DEBUG" = "1" ] && echo "$out"
+         echo "$out"
        return 1
   fi
-  grep -q "OPEN" <<<"$out" || { [ "$DEBUG" = "1" ] && echo "$out"; return 1; }
+  grep -q "OPEN" <<<"$out" || { echo "$out"; return 1; }
 }
 
 
 main() {
+    log "Version: $VERSION"
     check_oms || die "OMS not healthy"
     check_agent || die "Agent not healthy"
     check_db_open || die "EMREP not OPEN"
 
     log "All good → pinging healthcheck"
-    curl -fsS -m "$CURL_TIMEOUT" "$HC_URL" >/dev/null
+    response=$(curl -m "$CURL_TIMEOUT" "$HC_URL" 2>&1 || true)
+    echo "$response"
     log "Ping sent"
 }
 
