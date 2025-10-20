@@ -1,4 +1,5 @@
 # oem-heartbeat
+
 Dead man’s switch heartbeat for Oracle Enterprise Manager (OEM), designed for cron + external services like Healthchecks.io.
 
 ## Setup oem-heartbeat
@@ -26,6 +27,7 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
    ```
 
 3. Edit the oracle user’s crontab:
+
    ```bash
    crontab -e
    ```
@@ -58,7 +60,7 @@ tail -f /tmp/oem-heartbeat.log
 
 You should see entries like:
 
-```
+```log
 [2025-09-04T07:12:00Z] OMS check...
 [2025-09-04T07:12:05Z] Agent check...
 [2025-09-04T07:12:10Z] EMREP open check...
@@ -120,4 +122,3 @@ When updating the script, follow these steps:
    curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat.sha256
    sha256sum -c oem-heartbeat.sha256
    ```
-
