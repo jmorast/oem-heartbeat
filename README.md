@@ -9,8 +9,8 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 1. Copy the script to `/usr/local/bin` and make it executable:
 
    ```bash
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.8/oem-heartbeat
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.8/oem-heartbeat.sha256
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/latest/oem-heartbeat
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/latest/oem-heartbeat.sha256
 
    # Verify the checksum
    sha256sum -c oem-heartbeat.sha256
@@ -74,51 +74,48 @@ You should see entries like:
 
 When updating the script, follow these steps:
 
-1. Update checksum
+1. Set new version variable
+
+   - Example (bash):
+   ```bash
+   export newver=1.0.9
+   ```
+
+2. Update version constant in the script
+
+   ```bash
+   perl -pi -e "s/^VERSION=.*/VERSION=\"${newver}\"/" oem-heartbeat
+   git add oem-heartbeat
+   git commit -m "Bump version to v${newver}"
+   ```
+
+3. Update checksum
 
    ```bash
    sha256sum oem-heartbeat > oem-heartbeat.sha256
    git add oem-heartbeat oem-heartbeat.sha256
-   export newver=1.0.9
    git commit -m "Update checksum for v${newver}"
    ```
 
-   Update version constant in the script
-
-   - Edit the `VERSION` variable near the top of `oem-heartbeat` to the new version (for small repos we keep the version inside the script).
-
-   - Example (zsh/mac sed):
-
-     ```bash
-     perl -pi -e "s/^VERSION=.*/VERSION=\"${newver}\"/" oem-heartbeat
-     git add oem-heartbeat
-     git commit -m "Bump version to v${newver}"
-     ```
-
-2. Tag new version
+4. Tag new version
 
    ```bash
-   git tag -a v${newver} -m "Release v${newver}$"
+   git tag -a v${newver} -m "Release v${newver}"
    git push origin main
    git push origin v${newver}
    ```
 
-3. Update README version
-
-   Replace the previous version numbers in the curl URLs with vX.Y.Z.
-
-   Commit that change:
+5. Update latest tag
 
    ```bash
-   git add README.md
-   git commit -m "Update README to reference v${newver}"
-   git push origin main
+   git tag -f latest v${newver}
+   git push --force origin latest
    ```
 
-4. Verify release
+6. Verify release
 
    ```bash
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/vX.Y.Z/oem-heartbeat.sha256
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/latest/oem-heartbeat
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/latest/oem-heartbeat.sha256
    sha256sum -c oem-heartbeat.sha256
    ```
