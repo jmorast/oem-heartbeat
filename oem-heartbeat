@@ -29,7 +29,7 @@ EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
 EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-VERSION="${newver}"
+VERSION="1.0.7"
 RETRIES="${RETRIES:-3}"
 RETRY_DELAY="${RETRY_DELAY:-2}"
 # ==================================================
@@ -98,24 +98,26 @@ check_agent() {
             127) log "emctl binary missing or not executable: $EMCTL_AGENT" ;;
             *)   log "emctl returned error — see output below:" ;;
         esac
-        echo "$out"
-        return 1
-    fi
 
-    # If the agent reports it's not running, attempt to start it once.
-    if grep -qi "Agent is Not Running" <<<"$out"; then
-        log "Agent is Not Running — attempting to start agent"
-        start_out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" start agent 2>&1) || {
+        # If the status output indicates the agent is not running, attempt a single start and re-check.
+        if grep -qi "Agent is Not Running" <<<"$out"; then
+            log "Agent is Not Running — attempting to start agent"
+            start_out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" start agent 2>&1) || {
+                echo "$start_out"
+                log "Failed to start agent"
+                echo "$out"
+                return 1
+            }
             echo "$start_out"
-            log "Failed to start agent"
-            return 1
-        }
-        echo "$start_out"
-        # re-check status after start attempt
-        out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1) || {
+            # re-check status after start attempt
+            if ! out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1); then
+                echo "$out"
+                return 1
+            fi
+        else
             echo "$out"
             return 1
-        }
+        fi
     fi
 
     # Normalize and evaluate output
