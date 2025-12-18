@@ -29,7 +29,7 @@ EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
 EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-VERSION="1.0.7"
+VERSION="1.0.9"
 RETRIES="${RETRIES:-3}"
 RETRY_DELAY="${RETRY_DELAY:-2}"
 # ==================================================
@@ -110,6 +110,7 @@ check_agent() {
             }
             echo "$start_out"
             # re-check status after start attempt
+            sleep 2
             if ! out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1); then
                 echo "$out"
                 return 1
