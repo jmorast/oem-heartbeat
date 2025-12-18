@@ -29,10 +29,31 @@ EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
 EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-VERSION="1.0.5"
+VERSION="1.0.6"
+RETRIES="${RETRIES:-3}"
+RETRY_DELAY="${RETRY_DELAY:-2}"
 # ==================================================
 
 log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
+
+# retry wrapper: run the given command up to $RETRIES times with $RETRY_DELAY between attempts.
+# Calls are executed in the current shell context, so functions can be passed by name.
+retry() {
+    local attempt=1
+    local out
+    while [ "$attempt" -le "$RETRIES" ]; do
+        out=$("$@" 2>&1) && { echo "$out"; return 0; } || true
+        # capture exit code of the last command run inside substitution
+        local rc=$?
+        log "Attempt ${attempt}/${RETRIES} failed for: $* (rc=$rc)"
+        echo "$out"
+        if [ "$attempt" -lt "$RETRIES" ]; then
+            sleep "$RETRY_DELAY"
+        fi
+        attempt=$((attempt + 1))
+    done
+    return 1
+}
 
 die() {
     log "Failure: $*"
@@ -50,7 +71,7 @@ command -v curl >/dev/null 2>&1 || die "Missing command: curl"
 [ -n "$HC_URL" ] || die "HC_URL is not set"
 
 check_oms() {
-    log "OMS check..."
+    log "OMS check using $EMCTL_OMS"
     local out
     out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_OMS" status oms 2>&1) || {
         echo "$out"
@@ -64,7 +85,7 @@ check_oms() {
 }
 
 check_agent() {
-    log "Agent check..."
+    log "Agent check using $EMCTL_AGENT"
     local out rc
     if ! out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1); then
         rc=$?
@@ -93,7 +114,7 @@ check_agent() {
 }
 
 check_db_open() {
-   log "EMREP open check..."
+   log "EMREP open check using $SQLPLUS"
    local out
    if ! out=$(timeout "${SQLPLUS_TIMEOUT}s" "$SQLPLUS" -L -s ${EMREP_CONNECT} <<'SQL'
 set pages 0 feed off ver off echo off
@@ -109,12 +130,17 @@ SQL
 
 main() {
     log "Version: $VERSION"
-    check_oms || die "OMS not healthy"
-    check_agent || die "Agent not healthy"
-    check_db_open || die "EMREP not OPEN"
+
+    retry check_oms || die "OMS not healthy"
+    retry check_agent || die "Agent not healthy"
+    retry check_db_open || die "EMREP not OPEN"
 
     log "All good → pinging healthcheck"
-    response=$(curl -m "$CURL_TIMEOUT" "$HC_URL" 2>&1 || true)
+    # Retry the healthcheck ping itself as it may fail transiently
+    if ! response=$(retry curl -m "$CURL_TIMEOUT" "$HC_URL" 2>&1); then
+        echo "$response"
+        die "Healthcheck ping failed after ${RETRIES} attempts"
+    fi
     echo "$response"
     log "Ping sent"
 }
