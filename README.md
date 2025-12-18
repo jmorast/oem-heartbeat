@@ -79,7 +79,8 @@ When updating the script, follow these steps:
    ```bash
    sha256sum oem-heartbeat > oem-heartbeat.sha256
    git add oem-heartbeat oem-heartbeat.sha256
-   git commit -m "Update checksum for vX.Y.Z"
+   export newver=1.0.7
+   git commit -m "Update checksum for v${newver}"
    ```
 
    Update version constant in the script
@@ -90,17 +91,17 @@ When updating the script, follow these steps:
 
      ```bash
      # change 1.0.5 -> 1.0.6
-     sed -i '' 's/VERSION="1.0.5"/VERSION="1.0.6"/' oem-heartbeat
+     sed -i '' 's/VERSION="1.0.6"/VERSION="newver"/' oem-heartbeat
      git add oem-heartbeat
-     git commit -m "Bump version to vX.Y.Z"
+     git commit -m "Bump version to v${newver}"
      ```
 
 2. Tag new version
 
    ```bash
-   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git tag -a v${newver} -m "Release v${newver}$"
    git push origin main
-   git push origin vX.Y.Z
+   git push origin v${newver}
    ```
 
 3. Update README version
@@ -111,7 +112,7 @@ When updating the script, follow these steps:
 
    ```bash
    git add README.md
-   git commit -m "Update README to reference vX.Y.Z"
+   git commit -m "Update README to reference v${newver}"
    git push origin main
    ```
 
