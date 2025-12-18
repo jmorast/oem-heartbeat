@@ -151,7 +151,7 @@ SQL
 
 
 main() {
-    log "Version: $VERSION"
+    log "oem-heartbeat $VERSION"
 
     retry check_oms || die "OMS not healthy"
     retry check_agent || die "Agent not healthy"
