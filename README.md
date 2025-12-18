@@ -9,8 +9,8 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 1. Copy the script to `/usr/local/bin` and make it executable:
 
    ```bash
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.5/oem-heartbeat
-   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.5/oem-heartbeat.sha256
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.6/oem-heartbeat
+   curl -sSLO https://raw.githubusercontent.com/jmorast/oem-heartbeat/v1.0.6/oem-heartbeat.sha256
 
    # Verify the checksum
    sha256sum -c oem-heartbeat.sha256
@@ -89,8 +89,8 @@ When updating the script, follow these steps:
    - Example (zsh/mac sed):
 
      ```bash
-     # change 1.0.4 -> 1.0.5
-     sed -i '' 's/VERSION="1.0.4"/VERSION="1.0.5"/' oem-heartbeat
+     # change 1.0.5 -> 1.0.6
+     sed -i '' 's/VERSION="1.0.5"/VERSION="1.0.6"/' oem-heartbeat
      git add oem-heartbeat
      git commit -m "Bump version to vX.Y.Z"
      ```
