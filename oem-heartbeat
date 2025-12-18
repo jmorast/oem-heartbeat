@@ -42,15 +42,18 @@ retry() {
     local attempt=1
     local out
     while [ "$attempt" -le "$RETRIES" ]; do
-        out=$("$@" 2>&1) && { echo "$out"; return 0; } || true
-        # capture exit code of the last command run inside substitution
-        local rc=$?
-        log "Attempt ${attempt}/${RETRIES} failed for: $* (rc=$rc)"
-        echo "$out"
-        if [ "$attempt" -lt "$RETRIES" ]; then
-            sleep "$RETRY_DELAY"
+        if out=$("$@" 2>&1); then
+            echo "$out"
+            return 0
+        else
+            local rc=$?
+            log "Attempt ${attempt}/${RETRIES} failed for: $* (rc=$rc)"
+            echo "$out"
+            if [ "$attempt" -lt "$RETRIES" ]; then
+                sleep "$RETRY_DELAY"
+            fi
+            attempt=$((attempt + 1))
         fi
-        attempt=$((attempt + 1))
     done
     return 1
 }
