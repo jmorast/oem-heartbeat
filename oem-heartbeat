@@ -102,6 +102,22 @@ check_agent() {
         return 1
     fi
 
+    # If the agent reports it's not running, attempt to start it once.
+    if grep -qi "Agent is Not Running" <<<"$out"; then
+        log "Agent is Not Running — attempting to start agent"
+        start_out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" start agent 2>&1) || {
+            echo "$start_out"
+            log "Failed to start agent"
+            return 1
+        }
+        echo "$start_out"
+        # re-check status after start attempt
+        out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1) || {
+            echo "$out"
+            return 1
+        }
+    fi
+
     # Normalize and evaluate output
     if grep -Eqi "Agent (is )?(Running|Up|Ready)" <<<"$out"; then
         echo "$out"
