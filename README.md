@@ -23,7 +23,7 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 
    ```bash
    sudo su - oracle
-   ORACLE_SID=YOUR_OEM_SID HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat
+   ORACLE_SID=YOUR_OEM_SID OMS_HOME=/path/to/oms AGENT_HOME=/path/to/agent HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat
    ```
 
 3. Edit the oracle user’s crontab:
@@ -35,7 +35,7 @@ Preq: Create dead mans alarm in healthchecks.io / cronitor / better stack
 4. Add a daily heartbeat job (example: run at 07:12):
   
    ```bash
-   12 7 * * * ORACLE_SID=YOUR_OEM_SID HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat >>/tmp/oem-heartbeat.log 2>&1
+   12 7 * * * ORACLE_SID=YOUR_OEM_SID OMS_HOME=/path/to/oms AGENT_HOME=/path/to/agent HC_URL="https://hc-ping.com/YOUR-UUID" /usr/local/bin/oem-heartbeat >>/tmp/oem-heartbeat.log 2>&1
    ```
 
    - `ORACLE_SID=oem database sid` → replace with the SID for your EM repository database.
