@@ -2,20 +2,16 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-export PATH=/usr/local/bin:/usr/bin:/bin
-
 # ===================== CONFIG =====================
-# Unique healthcheck URL for this site/client
-HC_URL="${HC_URL:-}"
+export ORACLE_SID="${ORACLE_SID:-oemdb}"
+export OMS_HOME="${OMS_HOME:-/u01/app/oracle/middleware24/oms_home}"
+export AGENT_HOME="${AGENT_HOME:-/u01/app/oracle/agent24/agent_inst}"
+export HC_URL="${HC_URL:-}"
 
 # Oracle DB Setup
-export ORACLE_SID="${ORACLE_SID:-}"
+export PATH=/usr/local/bin:/usr/bin:/bin
 export ORAENV_ASK=NO
 . /usr/local/bin/oraenv -s
-
-# Oracle oms install paths
-OMS_HOME="${OMS_HOME:-/u01/app/oracle/middleware24/oms_home}"
-AGENT_HOME="${AGENT_HOME:-/u01/app/oracle/agent24/agent_inst}"
 
 # Direct paths to binaries
 EMCTL_OMS="$OMS_HOME/bin/emctl"
@@ -29,7 +25,7 @@ EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
 EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-VERSION="1.1.0"
+VERSION="1.1.1"
 RETRIES="${RETRIES:-3}"
 RETRY_DELAY="${RETRY_DELAY:-2}"
 # ==================================================
