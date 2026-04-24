@@ -22,10 +22,11 @@ SQLPLUS="$ORACLE_HOME/bin/sqlplus"
 EMREP_CONNECT="${EMREP_CONNECT:-/ as sysdba}"
 
 # Timeouts (seconds)
-EMCTL_TIMEOUT="${EMCTL_TIMEOUT:-10}"
+EMCTL_OMS_TIMEOUT="${EMCTL_OMS_TIMEOUT:-30}"
+EMCTL_AGENT_TIMEOUT="${EMCTL_AGENT_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-VERSION="1.1.1"
+VERSION="1.2.0"
 RETRIES="${RETRIES:-3}"
 RETRY_DELAY="${RETRY_DELAY:-2}"
 # ==================================================
@@ -72,7 +73,7 @@ command -v curl >/dev/null 2>&1 || die "Missing command: curl"
 check_oms() {
     log "OMS check using $EMCTL_OMS"
     local out
-    out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_OMS" status oms 2>&1) || {
+    out=$(timeout "${EMCTL_OMS_TIMEOUT}s" "$EMCTL_OMS" status oms 2>&1) || {
         echo "$out"
         return 1
     }
@@ -86,47 +87,48 @@ check_oms() {
 check_agent() {
     log "Agent check using $EMCTL_AGENT"
     local out rc
-    if ! out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1); then
-        rc=$?
-        log "Agent status command failed (rc=$rc)"
-        case $rc in
-            124) log "Timeout: agent command exceeded ${EMCTL_TIMEOUT}s" ;;
-            127) log "emctl binary missing or not executable: $EMCTL_AGENT" ;;
-            *)   log "emctl returned error — see output below:" ;;
-        esac
+    out=$(timeout "${EMCTL_AGENT_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1)
+    rc=$?
 
-        # If the status output indicates the agent is not running, attempt a single start and re-check.
-        if grep -qi "Agent is Not Running" <<<"$out"; then
-            log "Agent is Not Running — attempting to start agent"
-            start_out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" start agent 2>&1) || {
-                echo "$start_out"
-                log "Failed to start agent"
-                echo "$out"
-                return 1
-            }
-            echo "$start_out"
-            # re-check status after start attempt
-            sleep 2
-            if ! out=$(timeout "${EMCTL_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1); then
-                echo "$out"
-                return 1
-            fi
+    if [ $rc -eq 124 ]; then
+        log "Timeout: agent command exceeded ${EMCTL_AGENT_TIMEOUT}s"
+        echo "$out"
+        return 1
+    elif [ $rc -eq 127 ]; then
+        log "emctl binary missing or not executable: $EMCTL_AGENT"
+        echo "$out"
+        return 1
+    elif [ $rc -ne 0 ]; then
+        log "emctl returned rc=$rc"
+        echo "$out"
+        return 1
+    fi
+
+    # rc=0 but need to check what state the agent is actually in
+    if grep -Eqi "Agent is Running$|Agent is Up$" <<<"$out"; then
+        echo "$out"
+        return 0
+    elif grep -Eqi "Running but Not Ready" <<<"$out"; then
+        log "Agent is still initializing (Running but Not Ready)"
+        echo "$out"
+        return 1
+    elif grep -Eqi "Agent is Not Running" <<<"$out"; then
+        log "Agent is Not Running — attempting to start"
+        local start_out
+        start_out=$(timeout "${EMCTL_AGENT_TIMEOUT}s" "$EMCTL_AGENT" start agent 2>&1)
+        echo "$start_out"
+        sleep 5
+        out=$(timeout "${EMCTL_AGENT_TIMEOUT}s" "$EMCTL_AGENT" status agent 2>&1)
+        if grep -Eqi "Agent is Running$|Agent is Up$" <<<"$out"; then
+            echo "$out"
+            return 0
         else
             echo "$out"
             return 1
         fi
-    fi
-
-    # Normalize and evaluate output
-    if grep -Eqi "Agent (is )?(Running|Up|Ready)" <<<"$out"; then
-        echo "$out"
-        return 0
     else
-        log "Agent appears unhealthy. Raw output:"
+        log "Agent status unrecognized — see output:"
         echo "$out" | sed 's/^/    /'
-        # Some common indicators
-        grep -qi "blocked|not able to connect|invalid" <<<"$out" && \
-            log "Hint: Agent may be blocked, misconfigured, or unable to reach OMS."
         return 1
     fi
 }
