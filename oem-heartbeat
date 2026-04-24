@@ -26,7 +26,7 @@ EMCTL_OMS_TIMEOUT="${EMCTL_OMS_TIMEOUT:-30}"
 EMCTL_AGENT_TIMEOUT="${EMCTL_AGENT_TIMEOUT:-10}"
 SQLPLUS_TIMEOUT="${SQLPLUS_TIMEOUT:-10}"
 CURL_TIMEOUT="${CURL_TIMEOUT:-10}"
-VERSION="1.2.0"
+VERSION="1.2.1"
 RETRIES="${RETRIES:-3}"
 RETRY_DELAY="${RETRY_DELAY:-2}"
 # ==================================================
@@ -82,6 +82,7 @@ check_oms() {
         echo "$out"
         return 1
     fi
+    log "OMS is healthy"
 }
 
 check_agent() {
@@ -105,7 +106,7 @@ check_agent() {
     fi
 
     # rc=0 but need to check what state the agent is actually in
-    if grep -Eqi "Agent is Running$|Agent is Up$" <<<"$out"; then
+    if grep -Eqi "Agent is Running and Ready|Agent is Up" <<<"$out"; then
         echo "$out"
         return 0
     elif grep -Eqi "Running but Not Ready" <<<"$out"; then
@@ -131,6 +132,7 @@ check_agent() {
         echo "$out" | sed 's/^/    /'
         return 1
     fi
+    log "Agent is healthy"
 }
 
 check_db_open() {
@@ -145,6 +147,7 @@ SQL
        return 1
   fi
   grep -q "OPEN" <<<"$out" || { echo "$out"; return 1; }
+  log "EMREP is OPEN"
 }
 
 

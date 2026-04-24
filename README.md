@@ -77,6 +77,7 @@ When updating the script, follow these steps:
 1. Set new version variable
 
    - Example (bash):
+
    ```bash
    export newver=1.0.9
    ```
